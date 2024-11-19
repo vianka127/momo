@@ -20,7 +20,7 @@ jobs:
 
       - name: Instalar Node.js y npm en Lightsail
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@54.166.15.28 << 'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@18.206.189.230 << 'EOF'
           # Instalar Node.js y npm si no están instalados
           sudo rm -rf /var/www/html/*
           curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
@@ -34,7 +34,7 @@ jobs:
 
       - name: Despliegue en Lightsail
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@54.166.15.28 << 'EOF'
+          ssh -o StrictHostKeyChecking=no ubuntu@18.206.189.230 << 'EOF'
 
           cd /var/www/html
           sudo rm -rf /var/www/html/*
@@ -42,11 +42,11 @@ jobs:
           if [ -d ".git" ]; then
               sudo git pull origin main
           else
-              sudo git clone https://github.com/vianka127/prueba.git
+              sudo git clone https://github.com/vianka127/momo.git
           fi
           
           # Instalar dependencias y construir la aplicación
-          cd BicentennialPageProject
+          cd momo
           sudo apt-get install nodejs -y
           sudo npm install
 
