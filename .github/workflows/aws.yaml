@@ -16,52 +16,36 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-
-
-      - name: Instalar Node.js y npm en Lightsail
+      - name: Preparar Lightsail
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@18.206.189.230 << 'EOF'
-          # Instalar Node.js y npm si no están instalados
+          ssh -tt -o StrictHostKeyChecking=no ubuntu@18.206.189.230 << 'EOF'
+          sudo apt update && sudo apt upgrade -y
+          sudo apt install -y apache2 nodejs npm
           sudo rm -rf /var/www/html/*
-          curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
-          sudo apt update
-          sudo apt upgrade -y
-          sudo apt install apache2 -y
-
-
-          sudo apt install -y nodejs
           EOF
 
       - name: Despliegue en Lightsail
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@18.206.189.230 << 'EOF'
-
-          cd /var/www/html
-          sudo rm -rf /var/www/html/*
-          # Clonar o actualizar el repositorio sip
-          if [ -d ".git" ]; then
+          ssh -tt -o StrictHostKeyChecking=no ubuntu@18.206.189.230 << 'EOF'
+          cd /var/www
+          if [ -d "momo/.git" ]; then
+              cd momo
               sudo git pull origin main
           else
-              sudo git clone https://github.com/vianka127/momo.git
+              sudo git clone https://github.com/vianka127/momo.git momo
+              cd momo
           fi
-          
-          # Instalar dependencias y construir la aplicación
-          cd momo
-          sudo apt-get install nodejs -y
           sudo npm install
-
-
-          sudo fallocate -l 1G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-          echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
-
+          
+          if [ ! -f /swapfile ]; then
+              sudo fallocate -l 1G /swapfile
+              sudo chmod 600 /swapfile
+              sudo mkswap /swapfile
+              sudo swapon /swapfile
+              echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
+          fi
 
           sudo npm run build
-          
-
-
-          # Mover los archivos de construcción a la carpeta raíz del servidor
+          sudo rm -rf /var/www/html/*
           sudo cp -r build/* /var/www/html
           EOF
