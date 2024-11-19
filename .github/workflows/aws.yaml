@@ -1,0 +1,67 @@
+name: Deploy React App en AWS Lightsail
+
+on:
+  push:
+    branches: ['main']
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Conexion SSH
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+
+
+      - name: Instalar Node.js y npm en Lightsail
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@54.166.15.28 << 'EOF'
+          # Instalar Node.js y npm si no están instalados
+          sudo rm -rf /var/www/html/*
+          curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash -
+          sudo apt update
+          sudo apt upgrade -y
+          sudo apt install apache2 -y
+
+
+          sudo apt install -y nodejs
+          EOF
+
+      - name: Despliegue en Lightsail
+        run: |
+          ssh -o StrictHostKeyChecking=no ubuntu@54.166.15.28 << 'EOF'
+
+          cd /var/www/html
+          sudo rm -rf /var/www/html/*
+          # Clonar o actualizar el repositorio sip
+          if [ -d ".git" ]; then
+              sudo git pull origin main
+          else
+              sudo git clone https://github.com/vianka127/prueba.git
+          fi
+          
+          # Instalar dependencias y construir la aplicación
+          cd BicentennialPageProject
+          sudo apt-get install nodejs -y
+          sudo npm install
+
+
+          sudo fallocate -l 1G /swapfile
+          sudo chmod 600 /swapfile
+          sudo mkswap /swapfile
+          sudo swapon /swapfile
+          echo "/swapfile swap swap defaults 0 0" | sudo tee -a /etc/fstab
+
+
+          sudo npm run build
+          
+
+
+          # Mover los archivos de construcción a la carpeta raíz del servidor
+          sudo cp -r build/* /var/www/html
+          EOF
