@@ -1,0 +1,30 @@
+name: Integración con DockerHub
+
+on: 
+  push:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout del código fuente
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Login en DockerHub
+      - name: Login a DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Construir la imagen de Docker
+      - name: Build Docker Image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/proyecto-final:latest .
+
+      # Etiquetar y subir la imagen a DockerHub
+      - name: Push Docker Image to DockerHub
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/proyecto-final:latest
